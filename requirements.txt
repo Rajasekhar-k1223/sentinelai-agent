@@ -1,0 +1,14 @@
+# Core dependencies
+requests>=2.31.0
+psutil>=5.9.0
+pyyaml>=6.0
+python-dateutil>=2.8.2
+bson>=0.5.10
+
+# Optional scanning/monitoring
+yara-python>=4.3.0 ; sys_platform != "win32"
+
+# OS-specific dependencies
+pywin32>=305 ; sys_platform == "win32"
+systemd-python>=235 ; sys_platform == "linux"
+pyobjc>=9.2 ; sys_platform == "darwin"
