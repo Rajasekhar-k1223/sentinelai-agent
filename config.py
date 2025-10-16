@@ -5,9 +5,24 @@ import os
 # config.py - edit these values for your environment
 
 # Server endpoints (no trailing slash)
-SERVER_BASE = "http://192.168.1.9:8000/api"
+SERVER_BASE = "http://192.168.1.8:8000/api"
 
 AGENT_ID_FILE = "agent_id.txt"
+
+
+system = platform.system().lower()
+print(system.lower())
+if system.lower() == "windows":
+    DATA_DIR = os.path.join(os.environ.get("PROGRAMDATA", "C:\\ProgramData"), "SentinelAI")
+elif system.lower() == "darwin":  # macOS
+    # Use a user-writable folder
+    DATA_DIR = os.path.expanduser("~/Library/Application Support/SentinelAI")
+else:
+    DATA_DIR = "/var/lib/sentinelai"
+
+os.makedirs(DATA_DIR, exist_ok=True)
+
+
 
 def generate_system_uuid():
     # Use machine details (CPU + Node + OS + MAC address)
@@ -83,6 +98,7 @@ REQUEST_TIMEOUT = 10
 # FIM watch paths per OS
 def get_watch_paths():
     s = platform.system()
+    print("os type:- ",s)
     if s == "Windows":
         # typical sensitive locations on Windows
         return [
