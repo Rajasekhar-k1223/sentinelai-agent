@@ -184,88 +184,88 @@
 
 #     return new_baseline, 0
 
-import os
-import time
-import threading
-from datetime import datetime
-from core.utils import sha256_file
-import config
+# import os
+# import time
+# import threading
+# from datetime import datetime
+# from core.utils import sha256_file
+# import config
 
 
-def collect_files(paths):
-    """Collects files from specified directories recursively"""
-    files = []
-    for root in paths:
-        if not os.path.exists(root):
-            continue
-        for dirpath, dirs, filenames in os.walk(root):
-            for fn in filenames:
-                files.append(os.path.join(dirpath, fn))
-    return files
+# def collect_files(paths):
+#     """Collects files from specified directories recursively"""
+#     files = []
+#     for root in paths:
+#         if not os.path.exists(root):
+#             continue
+#         for dirpath, dirs, filenames in os.walk(root):
+#             for fn in filenames:
+#                 files.append(os.path.join(dirpath, fn))
+#     return files
 
 
-def build_baseline(paths):
-    """Build baseline data for file integrity monitoring"""
-    baseline = {}
-    for p in collect_files(paths):
-        try:
-            baseline[p] = {"hash": sha256_file(p), "mtime": os.path.getmtime(p)}
-        except Exception as e:
-            print(f"Error reading file {p}: {e}")
-            continue
-    return baseline
+# def build_baseline(paths):
+#     """Build baseline data for file integrity monitoring"""
+#     baseline = {}
+#     for p in collect_files(paths):
+#         try:
+#             baseline[p] = {"hash": sha256_file(p), "mtime": os.path.getmtime(p)}
+#         except Exception as e:
+#             print(f"Error reading file {p}: {e}")
+#             continue
+#     return baseline
 
 
-def scan_and_find_changes(paths, last_baseline):
-    """
-    Detect file changes (create, modify, delete).
-    Returns: (new_baseline, events_list)
-    """
-    new_baseline = {}
-    events = []
+# def scan_and_find_changes(paths, last_baseline):
+#     """
+#     Detect file changes (create, modify, delete).
+#     Returns: (new_baseline, events_list)
+#     """
+#     new_baseline = {}
+#     events = []
 
-    for p in collect_files(paths):
-        try:
-            h = sha256_file(p)
-            mtime = os.path.getmtime(p)
-        except Exception as e:
-            print(f"Error reading file {p}: {e}")
-            continue
+#     for p in collect_files(paths):
+#         try:
+#             h = sha256_file(p)
+#             mtime = os.path.getmtime(p)
+#         except Exception as e:
+#             print(f"Error reading file {p}: {e}")
+#             continue
 
-        old = last_baseline.get(p) if last_baseline else None
-        if not old:
-            # File created
-            events.append({
-                "file_path": p,
-                "change_type": "created",
-                "hash_after": h,
-                "mtime": mtime,
-                "timestamp": datetime.utcnow().isoformat()
-            })
-        elif old.get("hash") != h:
-            # File modified
-            events.append({
-                "file_path": p,
-                "change_type": "modified",
-                "hash_before": old.get("hash"),
-                "hash_after": h,
-                "mtime": mtime,
-                "timestamp": datetime.utcnow().isoformat()
-            })
-        new_baseline[p] = {"hash": h, "mtime": mtime}
+#         old = last_baseline.get(p) if last_baseline else None
+#         if not old:
+#             # File created
+#             events.append({
+#                 "file_path": p,
+#                 "change_type": "created",
+#                 "hash_after": h,
+#                 "mtime": mtime,
+#                 "timestamp": datetime.utcnow().isoformat()
+#             })
+#         elif old.get("hash") != h:
+#             # File modified
+#             events.append({
+#                 "file_path": p,
+#                 "change_type": "modified",
+#                 "hash_before": old.get("hash"),
+#                 "hash_after": h,
+#                 "mtime": mtime,
+#                 "timestamp": datetime.utcnow().isoformat()
+#             })
+#         new_baseline[p] = {"hash": h, "mtime": mtime}
 
-    # Detect file deletions
-    if last_baseline:
-        for p in list(last_baseline.keys()):
-            if p not in new_baseline:
-                events.append({
-                    "file_path": p,
-                    "change_type": "deleted",
-                    "hash_before": last_baseline[p].get("hash"),
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+#     # Detect file deletions
+#     if last_baseline:
+#         for p in list(last_baseline.keys()):
+#             if p not in new_baseline:
+#                 events.append({
+#                     "file_path": p,
+#                     "change_type": "deleted",
+#                     "hash_before": last_baseline[p].get("hash"),
+#                     "timestamp": datetime.utcnow().isoformat()
+#                 })
 
-    return new_baseline, events
+#     return new_baseline, events
 
 
 # def fim_loop(agent_id, hostname, callback=None):
@@ -310,3 +310,133 @@ def scan_and_find_changes(paths, last_baseline):
 #     """Start FIM in a separate thread"""
 #     fim_thread = threading.Thread(target=fim_loop, args=(agent_id, hostname, callback), daemon=True)
 #     fim_thread.start()
+import os
+import time
+import json
+import threading
+from datetime import datetime
+from core.utils import sha256_file
+from config import FIM_BASELINE_FILE,FIM_SCAN_INTERVAL,DATA_DIR
+
+
+BASELINE_FILE = os.path.join(DATA_DIR, "fim_baseline.json")
+# SCAN_INTERVAL = getattr(config, "SCAN_INTERVAL", 30)  # Default: 30 seconds
+SCAN_INTERVAL = FIM_SCAN_INTERVAL
+
+def collect_files(paths):
+    """Recursively collect files from given directories."""
+    files = []
+    for root in paths:
+        if not os.path.exists(root):
+            continue
+        for dirpath, dirs, filenames in os.walk(root):
+            for fn in filenames:
+                full_path = os.path.join(dirpath, fn)
+                if os.path.isfile(full_path):
+                    files.append(full_path)
+    return files
+
+
+def build_baseline(paths):
+    """Generate baseline file metadata for the provided paths."""
+    baseline = {}
+    for file_path in collect_files(paths):
+        try:
+            baseline[file_path] = {
+                "hash": sha256_file(file_path),
+                "mtime": os.path.getmtime(file_path),
+            }
+        except Exception as e:
+            print(f"[FIM] Error reading {file_path}: {e}")
+            continue
+    return baseline
+
+
+def save_baseline(baseline):
+    """Save baseline data to JSON file."""
+    try:
+        os.makedirs(os.path.dirname(BASELINE_FILE), exist_ok=True)
+        with open(BASELINE_FILE, "w") as f:
+            json.dump(baseline, f, indent=2)
+        print(f"[FIM] Baseline saved: {BASELINE_FILE}")
+    except Exception as e:
+        print(f"[FIM] Error saving baseline: {e}")
+
+
+def load_baseline():
+    """Load existing baseline data if available."""
+    if not os.path.exists(BASELINE_FILE):
+        return {}
+    try:
+        with open(BASELINE_FILE, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[FIM] Error loading baseline: {e}")
+        return {}
+
+
+def ensure_baseline(paths):
+    """
+    Ensure baseline exists — if not, create it.
+    This function replaces the missing ensure_baseline() call.
+    """
+    print(BASELINE_FILE)
+    print(os.path.exists(BASELINE_FILE))
+    if not os.path.exists(BASELINE_FILE):
+        print("[FIM] No baseline found. Creating new baseline...")
+        baseline = build_baseline(paths)
+        save_baseline(baseline)
+        return baseline
+    else:
+        print("[FIM] Existing baseline found.")
+        return load_baseline()
+
+
+def scan_and_find_changes(paths, last_baseline):
+    """
+    Detect file changes (create, modify, delete).
+    Returns: (new_baseline, events_list)
+    """
+    new_baseline = {}
+    events = []
+
+    for file_path in collect_files(paths):
+        try:
+            file_hash = sha256_file(file_path)
+            mtime = os.path.getmtime(file_path)
+        except Exception as e:
+            print(f"[FIM] Error reading {file_path}: {e}")
+            continue
+
+        old = last_baseline.get(file_path)
+        if not old:
+            events.append({
+                "file_path": file_path,
+                "change_type": "created",
+                "hash_after": file_hash,
+                "mtime": mtime,
+                "timestamp": datetime.utcnow().isoformat()
+            })
+        elif old.get("hash") != file_hash:
+            events.append({
+                "file_path": file_path,
+                "change_type": "modified",
+                "hash_before": old.get("hash"),
+                "hash_after": file_hash,
+                "mtime": mtime,
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
+        new_baseline[file_path] = {"hash": file_hash, "mtime": mtime}
+
+    # Detect deletions
+    for old_path in list(last_baseline.keys()):
+        if old_path not in new_baseline:
+            events.append({
+                "file_path": old_path,
+                "change_type": "deleted",
+                "hash_before": last_baseline[old_path].get("hash"),
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
+    return new_baseline, events
