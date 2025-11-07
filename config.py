@@ -6,7 +6,8 @@ import socket
 # config.py - edit these values for your environment
 
 # Server endpoints (no trailing slash)
-SERVER_BASE = "https://baculiform-undilatorily-deb.ngrok-free.dev/api"
+
+SERVER_BASE = " https://baculiform-undilatorily-deb.ngrok-free.dev/api"
 
 AGENT_ID_FILE = "agent_id.txt"
 
