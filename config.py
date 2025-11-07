@@ -2,10 +2,11 @@ import platform
 import uuid
 import hashlib
 import os
+import socket
 # config.py - edit these values for your environment
 
 # Server endpoints (no trailing slash)
-SERVER_BASE = "http://192.168.1.8:8000/api"
+SERVER_BASE = "https://baculiform-undilatorily-deb.ngrok-free.dev/api"
 
 AGENT_ID_FILE = "agent_id.txt"
 
@@ -47,12 +48,12 @@ def get_agent_id():
 # Agent identity - leave AGENT_ID None to auto-register and persist
 AGENT_ID = get_agent_id()
 AGENT_NAME = platform.node()  # optional display name
-
+HOSTNAME = socket.gethostname()
 # Authentication - if server requires token, you can set a static one here
 AUTH_TOKEN = None  # e.g., "Bearer eyJ..."
 
 # Intervals (seconds)
-HEARTBEAT_INTERVAL = 60
+HEARTBEAT_INTERVAL = 5
 TELEMETRY_INTERVAL = 30
 FIM_SCAN_INTERVAL = 120
 NETWORK_INTERVAL = 60
@@ -103,8 +104,11 @@ def get_watch_paths():
         # typical sensitive locations on Windows
         return [
             os.path.join(os.environ.get("SystemRoot", "C:\\Windows")),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows\\System32")),
             os.path.join(os.environ.get("ProgramFiles", "C:\\Program Files")),
             os.path.join(os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)")),
+            os.path.join(os.environ.get("Public", "C:\\Users\\Public")),
+            os.path.join(os.environ.get("ProgramData", "C:\\ProgramData")),
             os.path.join(os.path.expanduser("~"), "Documents")
         ]
     elif s == "Linux":

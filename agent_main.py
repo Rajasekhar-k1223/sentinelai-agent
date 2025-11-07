@@ -153,15 +153,18 @@ def run():
 
     ensure_agent_registered()
     agent_id = config.AGENT_ID
+    hostname = config.HOSTNAME
     print("Using agent_id:", agent_id)
     print("Agent started with id:", config.AGENT_ID)
     threads = [
         threading.Thread(target=telemetry_loop, args=(agent_id,), daemon=True),
         threading.Thread(target=heartbeat_loop, args=(agent_id,), daemon=True),
-        threading.Thread(target=fim_loop, args=(agent_id,), daemon=True),
+        # threading.Thread(target=fim_loop, args=(agent_id,), daemon=True),
         threading.Thread(target=network_loop, args=(agent_id,), daemon=True),
         threading.Thread(target=logs_loop, args=(agent_id,), daemon=True),
         threading.Thread(target=yara_startup_scan, args=(agent_id,), daemon=True),
+        threading.Thread(target=fim.fim_periodic_loop, args=(agent_id,hostname), daemon=True),
+        threading.Thread(target=fim.fim_watchdog_loop, args=(agent_id,hostname), daemon=True),
     ]
 
     for t in threads:

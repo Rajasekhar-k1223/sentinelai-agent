@@ -64,22 +64,32 @@ def post_telemetry(agent_id, payload):
     # print("Telemetry payload:", payload)
     return _post(f"agents/{agent_id}/telemetry", payload)
 
-def post_fim_events(agent_id, events):
+def post_fim_events(agent_id,hostname,timestamp, events):
     # print("Posting FIM events for agent_id:", agent_id)
     # print("FIM events payload:", events)
-    return _post("fim/events", {"agent_id": agent_id, "events": events})
+    print("posting fim events:", events)
+    return _post("fim/events", {"agent_id": agent_id,"hostname":hostname,"timestamp":timestamp, "events": events})
 
 def post_network_flows(agent_id, flows):
     # print("Posting network flows for agent_id:", agent_id)
     # print("Network flows payload:", flows)
     return _post("network/flows", {"agent_id": agent_id, "flows": flows})
 
-def post_yara_results(agent_id, results):
-    print("Posting YARA results for agent_id:", agent_id)
-    print("YARA results payload:", results)
-    return _post("yara/results", {"agent_id": agent_id, "results": results})
+# def post_yara_results(agent_id, results):
+#     print("Posting YARA results for agent_id:", agent_id)
+#     print("YARA results payload:", results)
+#     return _post("yara/results", {"agent_id": agent_id, "results": results})
 
 def post_log_event(agent_id, results):
     # print("Posting log event:", agent_id)
     # print("posting logs:", results[0])
     return _post("logs/ingest",results[0])
+
+def get_yara_rules():
+    return _get("yara/rules")
+
+def post_yara_results(agent_id, results):
+    print("Posting YARA results for agent_id:", agent_id)
+    print("YARA results payload:", results)
+    return _post("yara/results", {"agent_id": agent_id, "results": results})
+
