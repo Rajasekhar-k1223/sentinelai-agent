@@ -5,7 +5,7 @@ import os
 # config.py - edit these values for your environment
 
 # Server endpoints (no trailing slash)
-SERVER_BASE = "http://192.168.1.8:8000/api"
+SERVER_BASE = " https://baculiform-undilatorily-deb.ngrok-free.dev/api"
 
 AGENT_ID_FILE = "agent_id.txt"
 
