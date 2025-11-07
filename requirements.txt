@@ -1,15 +1,28 @@
-# Core dependencies
+# ===============================
+# Core Dependencies
+# ===============================
 requests>=2.31.0
 psutil>=5.9.0
 pyyaml>=6.0
 python-dateutil>=2.8.2
 bson>=0.5.10
 watchdog>=3.0.0
-# yara>=4.3.0
-# Optional scanning/monitoring
-yara-python>=1.7.7 ; sys_platform != "win32"
+# ===============================
+# YARA Integration (Cross-Platform)
+# ===============================
+# Official YARA bindings (VirusTotal)
+# Works on Windows, macOS, and Linux.
+yara-python>=4.3.0
 
-# OS-specific dependencies
+# ===============================
+# OS-Specific Dependencies
+# ===============================
+
+# Windows-specific (system integration, services, registry access)
 pywin32>=305 ; sys_platform == "win32"
+
+# Linux-specific (service management, journald)
 systemd-python>=235 ; sys_platform == "linux"
+
+# macOS-specific (system APIs, notifications)
 pyobjc>=9.2 ; sys_platform == "darwin"
