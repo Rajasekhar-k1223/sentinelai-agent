@@ -5,9 +5,9 @@ pyyaml>=6.0
 python-dateutil>=2.8.2
 bson>=0.5.10
 watchdog>=3.0.0
-yara>=4.3.0
+# yara>=4.3.0
 # Optional scanning/monitoring
-yara-python>=4.3.0 ; sys_platform != "win32"
+yara-python>=1.7.7 ; sys_platform != "win32"
 
 # OS-specific dependencies
 pywin32>=305 ; sys_platform == "win32"
